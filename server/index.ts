@@ -14,7 +14,7 @@ dotenv.config();
 
 app.use(express.json());
 
-app.use("/graphql", async (req, res) => {
+app.use("/", async (req, res) => {
   // Create a generic Request object that can be consumed by Graphql Helix's API
   const request = {
     body: req.body,
@@ -48,3 +48,5 @@ const port = process.env.PORT || 4000;
 app.listen(port, () => {
   console.log(`GraphQL server is running on port ${port}.`);
 });
+
+module.exports = app;
