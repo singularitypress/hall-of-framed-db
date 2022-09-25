@@ -33,7 +33,7 @@ const typeDefinitions = /* GraphQL */ `
 
   type Query {
     user(id: String): [User]
-    shots(id: String): [Shot]
+    shots(id: String, page: [Int]): [Shot]
   }
 `;
 
@@ -60,12 +60,23 @@ const resolvers = {
         return Object.values(authordb._default);
       }
     },
-    shots: (parent: undefined, { id }: { id: string }) => {
+    shots: (
+      parent: undefined,
+      { id, page = [] }: { id: string; page: number[] },
+    ) => {
+      let filteredShots: IShot[] = Object.values(shotsdb._default).sort(
+        (a, b) => b.epochTime - a.epochTime,
+      );
+
       if (id) {
-        return [shotsdb._default[id]];
-      } else {
-        return Object.values(shotsdb._default);
+        filteredShots = [shotsdb._default[id]];
       }
+
+      if (page.length >= 1) {
+        filteredShots = filteredShots.slice(page[0], page[1]);
+      }
+
+      return filteredShots;
     },
   },
   Shot: {

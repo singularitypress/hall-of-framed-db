@@ -7,12 +7,17 @@ import {
   sendResult,
 } from "graphql-helix";
 import dotenv from "dotenv";
+import cors from "cors";
 import { schema } from "@schema";
 const app = express();
 
 dotenv.config();
 
 app.use(express.json());
+
+app.use(
+  cors(process.env.ENV === "dev" ? { origin: "http://localhost:3000" } : {}),
+);
 
 app.use("/", async (req, res) => {
   // Create a generic Request object that can be consumed by Graphql Helix's API
