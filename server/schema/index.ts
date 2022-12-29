@@ -34,7 +34,13 @@ const typeDefinitions = /* GraphQL */ `
 
   type Query {
     user(id: String): [User]
-    shots(id: String, page: [Int]): [Shot]
+    shots(
+      id: String
+      page: [Int]
+      gameName: String
+      startDate: String
+      endDate: String
+    ): [Shot]
     games: [String]
   }
 `;
@@ -68,18 +74,6 @@ const shotsdb: {
   }, {}),
 };
 
-const gamesdb = [
-  ...new Set(Object.values(shotsdb._default).map((shot) => shot.gameName)),
-].sort((a, b) => {
-  if (a.toLowerCase() < b.toLowerCase()) {
-    return -1;
-  }
-  if (a.toLowerCase() > b.toLowerCase()) {
-    return 1;
-  }
-  return 0;
-});
-
 const cleanGamesdb = [
   ...new Set(
     Object.values(shotsdb._default).map((shot) => shot.resolvedGameName),
@@ -109,7 +103,19 @@ const resolvers = {
     },
     shots: (
       parent: undefined,
-      { id, page = [] }: { id: string; page: number[] },
+      {
+        id,
+        page = [],
+        gameName,
+        startDate,
+        endDate,
+      }: {
+        id: string;
+        page: number[];
+        gameName: string;
+        startDate: string;
+        endDate: string;
+      },
     ) => {
       let filteredShots: IShot[] = Object.values(shotsdb._default).sort(
         (a, b) => b.epochTime - a.epochTime,
@@ -121,6 +127,26 @@ const resolvers = {
 
       if (page.length >= 1) {
         filteredShots = filteredShots.slice(page[0], page[1]);
+      }
+
+      if (gameName) {
+        filteredShots = filteredShots.filter((shot) =>
+          shot.resolvedGameName?.toLowerCase().match(gameName?.toLowerCase()),
+        );
+      }
+
+      if (startDate) {
+        filteredShots = filteredShots.filter(
+          (shot) =>
+            new Date(shot.date).getTime() >= new Date(startDate).getTime(),
+        );
+      }
+
+      if (endDate) {
+        filteredShots = filteredShots.filter(
+          (shot) =>
+            new Date(shot.date).getTime() <= new Date(endDate).getTime(),
+        );
       }
 
       return filteredShots;
