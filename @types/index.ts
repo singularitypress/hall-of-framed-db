@@ -26,4 +26,17 @@ export interface IShot {
   epochTime: number;
   spoiler: boolean;
   colorName: string;
+  resolvedGameName: string;
+}
+
+export interface IAuthorDB {
+  _default: {
+    [key: string]: IUser;
+  };
+}
+
+export interface IShotsDB {
+  _default: {
+    [key: string]: IShot;
+  };
 }

@@ -29,13 +29,22 @@ const typeDefinitions = /* GraphQL */ `
     spoiler: Boolean
     colorName: String
     user: User
+    resolvedGameName: String
   }
 
   type Query {
     user(id: String): [User]
     shots(id: String, page: [Int]): [Shot]
+    games: [String]
   }
 `;
+
+const shotsJson = JSON.parse(
+  readFileSync("shotsdb.json", { encoding: "utf-8" }),
+);
+const gameDictJson = JSON.parse(
+  readFileSync("game-dict.json", { encoding: "utf-8" }),
+);
 
 const authordb: {
   _default: {
@@ -47,7 +56,45 @@ const shotsdb: {
   _default: {
     [key: string]: IShot;
   };
-} = JSON.parse(readFileSync("shotsdb.json", { encoding: "utf-8" }));
+} = {
+  _default: Object.keys(shotsJson._default).reduce((acc, key) => {
+    return {
+      ...acc,
+      [key]: {
+        ...shotsJson._default[key],
+        resolvedGameName: gameDictJson[shotsJson._default[key].gameName],
+      } as IShot,
+    };
+  }, {}),
+};
+
+const gamesdb = [
+  ...new Set(Object.values(shotsdb._default).map((shot) => shot.gameName)),
+].sort((a, b) => {
+  if (a.toLowerCase() < b.toLowerCase()) {
+    return -1;
+  }
+  if (a.toLowerCase() > b.toLowerCase()) {
+    return 1;
+  }
+  return 0;
+});
+
+const cleanGamesdb = [
+  ...new Set(
+    Object.values(shotsdb._default).map((shot) => shot.resolvedGameName),
+  ),
+]
+  .sort((a, b) => {
+    if (a.toLowerCase() < b.toLowerCase()) {
+      return -1;
+    }
+    if (a.toLowerCase() > b.toLowerCase()) {
+      return 1;
+    }
+    return 0;
+  })
+  .filter((game) => !!game);
 
 const resolvers = {
   Query: {
@@ -78,6 +125,7 @@ const resolvers = {
 
       return filteredShots;
     },
+    games: () => cleanGamesdb,
   },
   Shot: {
     user: (shot: IShot) =>
